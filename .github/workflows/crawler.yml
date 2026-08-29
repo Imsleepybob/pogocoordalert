@@ -22,6 +22,7 @@ jobs:
           PGP_JWT_TOKEN: ${{ secrets.PGP_JWT_TOKEN }}
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
