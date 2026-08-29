@@ -11,12 +11,12 @@ import requests
 API_BASE = "https://coordinates-api.pokemongopro.com"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FILTERS_PATH = REPO_ROOT / "filters.json"
-SETTINGS_PATH = REPO_ROOT / "settings.json"
 NOTIFIED_PATH = REPO_ROOT / "notified.json"
 
 JWT_TOKEN = os.environ["PGP_JWT_TOKEN"]
 GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"]
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
+NOTIFY_EMAIL = os.environ["NOTIFY_EMAIL"]
 
 
 # 데이터 로드/저장
@@ -114,10 +114,9 @@ def send_failure_email(to_address, error_message):
 # 메인 로직
 def main():
     filters = load_json(FILTERS_PATH, [])
-    settings = load_json(SETTINGS_PATH, {})
     notified = clean_notified(load_json(NOTIFIED_PATH, {}))
 
-    notify_email = settings.get("notify_email")
+    notify_email = NOTIFY_EMAIL
     new_spawns = []
 
     for filter_condition in filters:
