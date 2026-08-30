@@ -50,6 +50,11 @@
     font-size: 18px;
     font-weight: bold;
   }
+  #copy-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 20px;
+  }
   #maps-link {
     display: inline-block;
     margin-top: 12px;
@@ -64,6 +69,9 @@
     margin-top: 12px;
     font-size: 14px;
   }
+  .hidden {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -76,7 +84,9 @@
     <button id="jwt-save-btn">토큰 저장 및 조회</button>
   </div>
   <div id="coords-result"></div>
-  <a id="maps-link" class="hidden" href="#" target="_blank">Apple Maps에서 열기</a>
+  <button id="copy-btn" class="hidden">좌표 복사</button>
+  <br>
+  <a id="maps-link" class="hidden" href="#" target="_blank">지도에서 열기</a>
   <div id="error-msg"></div>
 </div>
 
@@ -106,12 +116,24 @@ async function fetchCoords(revealCode, jwt) {
   return response.json();
 }
 
+function isIos() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent);
+}
+
+function getMapsUrl(lat, lng) {
+  if (isIos()) {
+    return `https://maps.apple.com/?ll=${lat},${lng}&q=Pokemon`;
+  }
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
 async function showCoords() {
   const revealCode = getRevealCode();
   const jwt = getJwt();
   const errorEl = document.getElementById("error-msg");
   const resultEl = document.getElementById("coords-result");
   const mapsLinkEl = document.getElementById("maps-link");
+  const copyBtnEl = document.getElementById("copy-btn");
 
   if (!revealCode) {
     errorEl.textContent = "좌표 코드가 URL에 없습니다.";
@@ -124,8 +146,16 @@ async function showCoords() {
   try {
     const data = await fetchCoords(revealCode, jwt);
     resultEl.textContent = data.coords;
-    mapsLinkEl.href = `https://maps.apple.com/?ll=${data.lat},${data.lng}&q=Pokemon`;
+    mapsLinkEl.href = getMapsUrl(data.lat, data.lng);
+    mapsLinkEl.textContent = isIos() ? "Apple Maps에서 열기" : "Google Maps에서 열기";
     mapsLinkEl.classList.remove("hidden");
+    copyBtnEl.classList.remove("hidden");
+    copyBtnEl.onclick = () => {
+      navigator.clipboard.writeText(data.coords).then(() => {
+        copyBtnEl.textContent = "복사됨";
+        setTimeout(() => { copyBtnEl.textContent = "좌표 복사"; }, 1500);
+      });
+    };
     document.getElementById("token-section").style.display = "none";
     errorEl.textContent = "";
   } catch (e) {
