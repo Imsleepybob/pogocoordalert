@@ -8,15 +8,15 @@
     "blacklist_pokemon_ids": [],
     "blacklist_species_forms": [],
     "boosted": null,
-    "center_lat": 37.529569,
-    "center_lng": 126.892997,
+    "center_lat": 37.52957194476345,
+    "center_lng": 126.89300095733333,
     "cp_max": null,
     "cp_min": null,
     "forms": [],
     "gender": null,
     "iv_mode": "percent",
     "iv_percent_max": null,
-    "iv_percent_min": 0,
+    "iv_percent_min": 100,
     "level_max": null,
     "level_min": null,
     "location": null,
@@ -30,6 +30,7 @@
     "sizes": [],
     "sort": "DISTANCE",
     "species_forms": [],
-    "weather_id": null
+    "weather_id": null,
+    "_pokemon_identifier": null
   }
 ]
