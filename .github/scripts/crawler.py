@@ -33,12 +33,17 @@ def save_json(path, data):
 
 
 # API 호출
+def strip_internal_fields(filter_condition):
+    return {k: v for k, v in filter_condition.items() if not k.startswith("_")}
+
+
 def search(filter_condition):
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {JWT_TOKEN}",
     }
-    response = requests.post(f"{API_BASE}/search", headers=headers, json=filter_condition, timeout=20)
+    payload = strip_internal_fields(filter_condition)
+    response = requests.post(f"{API_BASE}/search", headers=headers, json=payload, timeout=20)
     if response.status_code == 401:
         raise PermissionError("JWT 토큰이 만료되었거나 유효하지 않습니다.")
     response.raise_for_status()
@@ -147,7 +152,7 @@ def main():
             new_spawns.append(spawn)
 
     if new_spawns and notify_email:
-        subject = f"[포고 알림] {len(new_spawns)}마리 감지됨"
+        subject = f"[포켓몬 알림] {len(new_spawns)}마리 감지됨"
         body = build_email_body(new_spawns)
         send_email(notify_email, subject, body)
 
