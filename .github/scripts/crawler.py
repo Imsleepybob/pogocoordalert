@@ -9,9 +9,11 @@ from pathlib import Path
 import requests
 
 API_BASE = "https://coordinates-api.pokemongopro.com"
+SITE_BASE = "https://Imsleepybob.github.io/pogocoordalert"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FILTERS_PATH = REPO_ROOT / "filters.json"
 NOTIFIED_PATH = REPO_ROOT / "notified.json"
+POKEMON_KO_NAMES_PATH = REPO_ROOT / "pokemon_ko_names.json"
 
 JWT_TOKEN = os.environ["PGP_JWT_TOKEN"]
 GMAIL_ADDRESS = os.environ["GMAIL_ADDRESS"]
@@ -50,15 +52,21 @@ def search(filter_condition):
     return response.json()
 
 
-def reveal(reveal_code):
-    headers = {
-        "Authorization": f"Bearer {JWT_TOKEN}",
-    }
-    response = requests.get(f"{API_BASE}/reveal/{reveal_code}", headers=headers, timeout=20)
-    if response.status_code == 401:
-        raise PermissionError("JWT 토큰이 만료되었거나 유효하지 않습니다.")
-    response.raise_for_status()
-    return response.json()
+# 포켓몬 이름 한국어화
+def load_pokemon_ko_names():
+    ko_names_by_id = {}
+    for info in load_json(POKEMON_KO_NAMES_PATH, {}).values():
+        ko_names_by_id[info["id"]] = info["ko"]
+    return ko_names_by_id
+
+
+def get_pokemon_display_name(ko_names_by_id, spawn):
+    ko_name = ko_names_by_id.get(spawn["pokemon_id"])
+    if not ko_name:
+        return spawn["pokemon_name"]
+    if spawn.get("form"):
+        return f"{ko_name} ({spawn['form']})"
+    return ko_name
 
 
 # 중복 방지
@@ -85,18 +93,17 @@ def format_despawn_remaining(despawn_at):
     return f"{minutes}분 {seconds}초"
 
 
-def build_email_body(spawns):
+def build_email_body(spawns, ko_names_by_id):
     lines = []
     for spawn in spawns:
         despawn_remaining = format_despawn_remaining(spawn["despawn_at"])
-        coords = spawn.get("coords")
-        maps_link = f"https://www.google.com/maps?q={coords}" if coords else "좌표 획득 실패"
+        display_name = get_pokemon_display_name(ko_names_by_id, spawn)
+        reveal_link = f"{SITE_BASE}/reveal.html?code={spawn['reveal_code']}"
         lines.append(
-            f"{spawn['pokemon_name']}이(가) {spawn['distance_km']}km 거리에 출현했습니다! "
+            f"{display_name}이(가) {spawn['distance_km']}km 거리에 출현했습니다! "
             f"디스폰까지: {despawn_remaining}\n"
             f"CP {spawn['cp']} / 레벨 {spawn['level']} / IV {spawn['iv_percent']}%\n"
-            f"좌표: {coords}\n"
-            f"지도에서 보기: {maps_link}\n"
+            f"좌표 보기: {reveal_link}\n"
         )
     return "\n".join(lines)
 
@@ -120,6 +127,7 @@ def send_failure_email(to_address, error_message):
 def main():
     filters = load_json(FILTERS_PATH, [])
     notified = clean_notified(load_json(NOTIFIED_PATH, {}))
+    ko_names_by_id = load_pokemon_ko_names()
 
     notify_email = NOTIFY_EMAIL
     new_spawns = []
@@ -137,23 +145,12 @@ def main():
             if not is_new_spawn(notified, spawn["encounter_id"]):
                 continue
 
-            try:
-                coords_data = reveal(spawn["reveal_code"])
-                spawn["coords"] = coords_data["coords"]
-            except PermissionError as e:
-                if notify_email:
-                    send_failure_email(notify_email, str(e))
-                save_json(NOTIFIED_PATH, notified)
-                return
-            except requests.exceptions.RequestException:
-                spawn["coords"] = None
-
             mark_notified(notified, spawn["encounter_id"], spawn["despawn_at"])
             new_spawns.append(spawn)
 
     if new_spawns and notify_email:
-        subject = f"[포켓몬 알림] {len(new_spawns)}마리 감지됨"
-        body = build_email_body(new_spawns)
+        subject = f"[포고 알림] {len(new_spawns)}마리 감지됨"
+        body = build_email_body(new_spawns, ko_names_by_id)
         send_email(notify_email, subject, body)
 
     save_json(NOTIFIED_PATH, notified)
