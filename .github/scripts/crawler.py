@@ -3,6 +3,7 @@ import os
 import smtplib
 import time
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
@@ -94,25 +95,47 @@ def format_despawn_remaining(despawn_at):
 
 
 def build_email_body(spawns, ko_names_by_id):
-    lines = []
+    cards = []
     for spawn in spawns:
         despawn_remaining = format_despawn_remaining(spawn["despawn_at"])
         display_name = get_pokemon_display_name(ko_names_by_id, spawn)
         reveal_link = f"{SITE_BASE}/reveal.html?code={spawn['reveal_code']}"
-        lines.append(
-            f"{display_name}이(가) {spawn['distance_km']}km 거리에 출현했습니다! "
-            f"디스폰까지: {despawn_remaining}\n"
-            f"CP {spawn['cp']} / 레벨 {spawn['level']} / IV {spawn['iv_percent']}%\n"
-            f"좌표 보기: {reveal_link}\n"
-        )
-    return "\n".join(lines)
+        cards.append(f"""
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff; border:1px solid #e0e0e0; border-radius:8px; margin-bottom:12px;">
+          <tr>
+            <td style="padding:16px;">
+              <div style="font-size:16px; font-weight:bold; color:#222;">{display_name}</div>
+              <div style="font-size:13px; color:#888; margin-top:2px;">{spawn['distance_km']}km 거리 · 디스폰까지 {despawn_remaining}</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;">
+                <tr>
+                  <td style="font-size:13px; color:#555; padding-right:12px;">CP <b>{spawn['cp']}</b></td>
+                  <td style="font-size:13px; color:#555; padding-right:12px;">레벨 <b>{spawn['level']}</b></td>
+                  <td style="font-size:13px; color:#555;">IV <b>{spawn['iv_percent']}%</b> ({spawn['raw_iv']})</td>
+                </tr>
+              </table>
+              <a href="{reveal_link}" style="display:inline-block; margin-top:12px; padding:8px 16px; background:#333333; color:#ffffff; text-decoration:none; border-radius:6px; font-size:13px;">좌표 보기</a>
+            </td>
+          </tr>
+        </table>
+        """)
+
+    return f"""
+    <html>
+      <body style="font-family:-apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif; background:#f5f5f5; padding:16px;">
+        <div style="max-width:480px; margin:0 auto;">
+          {"".join(cards)}
+        </div>
+      </body>
+    </html>
+    """
 
 
-def send_email(to_address, subject, body):
-    message = MIMEText(body)
+def send_email(to_address, subject, html_body):
+    message = MIMEMultipart("alternative")
     message["Subject"] = subject
     message["From"] = GMAIL_ADDRESS
     message["To"] = to_address
+    message.attach(MIMEText(html_body, "html"))
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
@@ -120,7 +143,7 @@ def send_email(to_address, subject, body):
 
 
 def send_failure_email(to_address, error_message):
-    send_email(to_address, "[포고 크롤러] 인증 실패", f"JWT 토큰 문제로 크롤러가 중단되었습니다.\n\n{error_message}")
+    send_email(to_address, "[포고 크롤러] 인증 실패", f"<p>JWT 토큰 문제로 크롤러가 중단되었습니다.</p><p>{error_message}</p>")
 
 
 # 메인 로직
