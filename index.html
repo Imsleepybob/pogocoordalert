@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포켓몬 GO 좌표 알리미 - 조건 설정</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px;
+    background: #f5f5f5;
+    color: #222;
+  }
+  h1 {
+    font-size: 20px;
+  }
+  h2 {
+    font-size: 16px;
+    margin-top: 24px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-actions button {
+    margin-left: 6px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  input, select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .row3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #333;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button.secondary {
+    background: #999;
+  }
+  button.danger {
+    background: #c0392b;
+  }
+  #pokemon-list {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: none;
+  }
+  #pokemon-list div {
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  #pokemon-list div:hover {
+    background: #eee;
+  }
+  #status-msg {
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .tab-group {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .tab-group button {
+    flex: 1;
+    background: #eee;
+    color: #333;
+  }
+  .tab-group button.active {
+    background: #333;
+    color: #fff;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>포켓몬 GO 좌표 알리미 - 조건 설정</h1>
+
+<div class="card">
+  <h2 style="margin-top:0">GitHub 연결</h2>
+  <label>Personal Access Token</label>
+  <input type="password" id="pat-input" placeholder="ghp_로 시작하는 토큰">
+  <button id="pat-save-btn" style="margin-top:8px">토큰 저장</button>
+  <div id="status-msg"></div>
+</div>
+
+<h2>등록된 검색 조건</h2>
+<div id="filter-cards"></div>
+<button id="add-filter-btn">+ 새 조건 추가</button>
+
+<div class="card hidden" id="filter-form-card">
+  <h2 style="margin-top:0" id="form-title">새 조건</h2>
+
+  <label>포켓몬 (선택 안 하면 전체 대상)</label>
+  <input type="text" id="pokemon-search" placeholder="포켓몬 이름 검색 (예: 피카츄)">
+  <div id="pokemon-list"></div>
+  <div id="selected-pokemon" style="margin-top:6px; font-size:13px; color:#555"></div>
+
+  <label>위치</label>
+  <div class="row">
+    <input type="text" id="coords-input" placeholder="위도,경도 (예: 37.5665,126.9780)">
+    <input type="number" id="radius-input" placeholder="반경(km)" min="0.1" max="1000" step="0.1">
+  </div>
+  <button type="button" class="secondary" id="geolocate-btn" style="margin-top:8px">현재 위치 사용</button>
+
+  <label>필터 기준</label>
+  <div class="tab-group">
+    <button type="button" id="tab-stats" class="active">스탯 기준</button>
+    <button type="button" id="tab-pvp">PvP 기준</button>
+  </div>
+
+  <div id="stats-fields">
+    <div class="row">
+      <div>
+        <label>CP 최소</label>
+        <input type="number" id="cp-min">
+      </div>
+      <div>
+        <label>CP 최대</label>
+        <input type="number" id="cp-max">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>레벨 최소</label>
+        <input type="number" id="level-min" step="0.5">
+      </div>
+      <div>
+        <label>레벨 최대</label>
+        <input type="number" id="level-max" step="0.5">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>IV% 최소</label>
+        <input type="number" id="iv-min" min="0" max="100" step="0.1">
+      </div>
+      <div>
+        <label>IV% 최대</label>
+        <input type="number" id="iv-max" min="0" max="100" step="0.1">
+      </div>
+    </div>
+    <div class="row3">
+      <div>
+        <label>크기</label>
+        <select id="size-select">
+          <option value="">전체</option>
+          <option value="XXS">XXS</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="XXL">XXL</option>
+        </select>
+      </div>
+      <div>
+        <label>폼</label>
+        <input type="text" id="form-input" placeholder="예: alola">
+      </div>
+      <div>
+        <label>성별</label>
+        <select id="gender-select">
+          <option value="">전체</option>
+          <option value="Male">수컷</option>
+          <option value="Female">암컷</option>
+          <option value="Genderless">성별 없음</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="pvp-fields" class="hidden">
+    <div class="row">
+      <div>
+        <label>리그</label>
+        <select id="pvp-league">
+          <option value="great">그레이트 리그</option>
+          <option value="ultra">울트라 리그</option>
+        </select>
+      </div>
+      <div>
+        <label>상위 랭킹 (1-50)</label>
+        <input type="number" id="pvp-top-rank" min="1" max="50">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>이전 진화체 포함</label>
+        <select id="pvp-include-pre">
+          <option value="yes">포함</option>
+          <option value="no">미포함</option>
+        </select>
+      </div>
+      <div>
+        <label>최소 CP</label>
+        <input type="number" id="pvp-min-cp" min="0" max="10000">
+      </div>
+    </div>
+    <div class="row3">
+      <div>
+        <label>크기</label>
+        <select id="pvp-size-select">
+          <option value="">전체</option>
+          <option value="XXS">XXS</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="XXL">XXL</option>
+        </select>
+      </div>
+      <div>
+        <label>폼</label>
+        <input type="text" id="pvp-form-input" placeholder="예: alola">
+      </div>
+      <div>
+        <label>성별</label>
+        <select id="pvp-gender-select">
+          <option value="">전체</option>
+          <option value="Male">수컷</option>
+          <option value="Female">암컷</option>
+          <option value="Genderless">성별 없음</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; text-align:right">
+    <button type="button" class="secondary" id="cancel-btn">취소</button>
+    <button type="button" id="save-filter-btn">저장</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
