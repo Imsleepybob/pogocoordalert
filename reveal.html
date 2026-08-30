@@ -81,7 +81,7 @@
 </div>
 
 <script>
-const API_BASE = "https://coordinates-api.pokemongopro.com";
+const PROXY_BASE = "https://pogo-reveal-proxy.creatervictory9.workers.dev";
 
 function getRevealCode() {
   const params = new URLSearchParams(window.location.search);
@@ -93,7 +93,7 @@ function getJwt() {
 }
 
 async function fetchCoords(revealCode, jwt) {
-  const response = await fetch(`${API_BASE}/reveal/${revealCode}`, {
+  const response = await fetch(`${PROXY_BASE}?code=${revealCode}`, {
     headers: {
       Authorization: `Bearer ${jwt}`,
     },
