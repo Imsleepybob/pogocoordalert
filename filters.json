@@ -68,5 +68,41 @@
     "species_forms": [],
     "weather_id": null,
     "_pokemon_identifier": "lickilicky"
+  },
+  {
+    "pvp_mode": false,
+    "pvp_league": "great",
+    "pvp_top_rank": null,
+    "pvp_include_pre_evolutions": true,
+    "blacklist_forms": [],
+    "blacklist_pokemon_ids": [],
+    "blacklist_species_forms": [],
+    "boosted": null,
+    "center_lat": 37.51021,
+    "center_lng": 126.88903,
+    "cp_max": null,
+    "cp_min": null,
+    "forms": [],
+    "gender": null,
+    "iv_mode": "percent",
+    "iv_percent_max": null,
+    "iv_percent_min": 100,
+    "level_max": null,
+    "level_min": null,
+    "location": null,
+    "min_ttl": null,
+    "pokemon_ids": [
+      443
+    ],
+    "pvp_min_cp": null,
+    "radius_km": 1,
+    "raw_iv_atk": null,
+    "raw_iv_def": null,
+    "raw_iv_sta": null,
+    "sizes": [],
+    "sort": "DISTANCE",
+    "species_forms": [],
+    "weather_id": null,
+    "_pokemon_identifier": "gible"
   }
 ]
