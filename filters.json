@@ -131,7 +131,7 @@
       570
     ],
     "pvp_min_cp": null,
-    "radius_km": 3,
+    "radius_km": 0.3,
     "raw_iv_atk": null,
     "raw_iv_def": null,
     "raw_iv_sta": null,
